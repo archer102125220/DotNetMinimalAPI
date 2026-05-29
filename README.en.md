@@ -18,6 +18,21 @@ Minimal API is a lightweight pattern for building HTTP APIs introduced in .NET 6
 - Framework: .NET 10.0
 - Language: C#
 
+## How to Create a Minimal API Project
+
+If you want to create a brand new Minimal API project from scratch, you can use the template provided by the .NET CLI. Open your terminal and run the following commands:
+
+```bash
+# Create a new web project named MyMinimalApi (which uses the Minimal API template by default)
+dotnet new web -n MyMinimalApi
+
+# Navigate into the project directory
+cd MyMinimalApi
+```
+
+> [!NOTE]
+> Starting from .NET 6, `dotnet new web` defaults to generating a Minimal API project structure (using top-level statements without a Controllers folder). If you need a traditional Web API project with controllers, you should use `dotnet new webapi` instead.
+
 ## How to Start the Project
 
 > [!NOTE]
