@@ -71,6 +71,30 @@ dotnet --version
 ```
 如果出現對應的 SDK 版本號 (例如 `8.0.204`)，代表您已成功透過 asdf 裝好並啟用了 .NET SDK！
 
+## 6. 使用 `global.json` 鎖定專案 SDK 版本
+
+除了 asdf 的 `.tool-versions` 之外，.NET 官方提供了一個更原生的方式來控制專案使用的 SDK 版本，那就是 `global.json`。
+
+### `global.json` 的作用
+`global.json` 檔案放在專案目錄，用來告訴 `dotnet` CLI 在建置或執行此專案時，必須使用哪個特定版本的 .NET SDK。這能確保團隊中所有開發者和 CI/CD 流程都使用完全一樣的 SDK 版本，避免因為 SDK 版本差異導致不可預期的建置或編譯錯誤。以這份專案為例，它鎖定了 `6.0.425` 版的 SDK。
+
+### 設定與使用方式
+您可以直接在專案根目錄建立或編輯 `global.json` 檔案。例如，本專案的 `global.json` 內容如下：
+
+```json
+{
+  "sdk": {
+    "version": "6.0.425"
+  }
+}
+```
+
+如果您想透過指令快速產生這個檔案，可以在專案目錄下執行：
+```bash
+dotnet new globaljson --sdk-version 6.0.425
+```
+設定好之後，只要在該目錄下執行任何 `dotnet` 相關指令，CLI 就會自動優先使用 `global.json` 所定義的 SDK 版本。
+
 ---
 
 ## 補充筆記 (關於 .NET 全域工具)
