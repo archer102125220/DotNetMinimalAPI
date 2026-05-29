@@ -33,8 +33,11 @@ dotnet watch run
 - **VS Code**: 
   1. Open VS Code in the project root directory (`code .`).
   2. If the C# / C# Dev Kit extension is installed, press `F5` to start debugging.
-- **Visual Studio / Rider**:
-  1. Open the project folder or the `.csproj` file directly.
+- **Visual Studio (Windows) / Rider**:
+  > [!TIP]
+  > **Cross-Platform & IDE Note**: This project was initially created using the .NET CLI, so it may not contain a `.sln` (solution) file by default. If you are using Visual Studio on Windows, simply open the `.csproj` project file. After loading the project, Visual Studio will automatically prompt you to generate and save a `.sln` file upon your first save.
+
+  1. Open the `.csproj` project file directly.
   2. Click the "Run" button at the top or press `F5` to start executing.
 
 ## Testing the API

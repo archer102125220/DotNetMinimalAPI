@@ -33,8 +33,11 @@ dotnet watch run
 - **VS Code**: 
   1. 在專案根目錄開啟 VS Code (`code .`)。
   2. 若已安裝 C# / C# Dev Kit 擴充功能，按下 `F5` 即可啟動偵錯。
-- **Visual Studio / Rider**:
-  1. 直接開啟專案資料夾或 `.csproj` 專案檔。
+- **Visual Studio (Windows) / Rider**:
+  > [!TIP]
+  > **跨平台與 IDE 開啟提示**：本專案初始是透過 .NET CLI 建立，目錄下預設可能沒有 `.sln` (方案檔)。若使用 Windows 版 Visual Studio，只需直接開啟 `.csproj` 專案檔即可。Visual Studio 載入後，在首次儲存時會自動提示您生成 `.sln` 檔。
+
+  1. 直接開啟 `.csproj` 專案檔。
   2. 點擊上方的「執行 (Run)」或按下 `F5` 開始執行。
 
 ## 測試 API
