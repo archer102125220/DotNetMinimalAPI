@@ -71,7 +71,21 @@ dotnet --version
 ```
 如果出現對應的 SDK 版本號 (例如 `8.0.204`)，代表您已成功透過 asdf 裝好並啟用了 .NET SDK！
 
-## 6. 使用 `global.json` 鎖定專案 SDK 版本
+## 6. 設定 DOTNET_ROOT 環境變數 (重要)
+
+許多 .NET 的開發工具（例如 IDE Rider、VS Code 的 C# 擴充套件等）會依賴 `DOTNET_ROOT` 這個環境變數來尋找 .NET SDK 的安裝路徑。由於 asdf 是透過 shims 機制執行，如果沒有明確設定 `DOTNET_ROOT`，這些外部工具可能會找不到您安裝的 SDK 並報錯。
+
+`asdf-dotnet-core` 外掛本身提供了一個自動設定 `DOTNET_ROOT` 的腳本。請將以下內容加入至您的 `~/.zshrc`（如果是使用 bash 則為 `~/.bash_profile` 或 `~/.bashrc`）中：
+
+```bash
+# 自動為 asdf-dotnet-core 設定 DOTNET_ROOT
+. ~/.asdf/plugins/dotnet-core/set-dotnet-home.zsh
+```
+*(提示：若使用 bash，請將副檔名改為 `.bash`)*
+
+加入完成後，請記得執行 `source ~/.zshrc` 讓變數生效。
+
+## 7. 使用 `global.json` 鎖定專案 SDK 版本
 
 除了 asdf 的 `.tool-versions` 之外，.NET 官方提供了一個更原生的方式來控制專案使用的 SDK 版本，那就是 `global.json`。
 
