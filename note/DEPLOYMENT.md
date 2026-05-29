@@ -148,6 +148,43 @@ sudo systemctl reload nginx
 
 ---
 
+## 4. 傳統 Windows 伺服器部署 (如 IIS)
+
+若要在 Windows IIS 上部署 Native AOT 應用程式：
+
+### 步驟 1：在 Windows 環境發布
+在 Windows 上建置 AOT 應用程式，需要安裝 **Visual Studio 2022** 並勾選 **C++ 桌面開發** 工作負載。
+執行以下指令發布：
+```cmd
+dotnet publish -c Release -r win-x64 --self-contained
+```
+
+### 步驟 2：IIS 伺服器設定
+由於編譯後是原生的 `.exe` 執行檔，您仍然需要在 IIS 伺服器上安裝 [ASP.NET Core 裝載套件 (Hosting Bundle)](https://dotnet.microsoft.com/download/dotnet)。
+
+1. 在 IIS 中新增站台，並將實體路徑指向 `publish` 資料夾。
+2. 開啟該站台的**應用程式集區 (Application Pool)**，將 **.NET CLR 版本**設定為 **「沒有受控碼」(No Managed Code)**。
+
+### 步驟 3：確認 web.config
+發布過程通常會自動產生 `web.config` 檔案。如果您需要手動設定，請確保 `processPath` 指向編譯好的 `.exe` 執行檔：
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <!-- processPath 指向你的原生執行檔 -->
+      <aspNetCore processPath=".\DotNetMinimalAPI.exe" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" hostingModel="inprocess" />
+    </system.webServer>
+  </location>
+</configuration>
+```
+
+---
+
 ## 注意事項
 
 - **AOT 限制**：因為專案啟用了 Native AOT，某些依賴於執行期反射 (Runtime Reflection) 或動態程式碼生成 (Dynamic Code Generation) 的套件可能無法正常運作。部署前務必在本地進行充分測試。
