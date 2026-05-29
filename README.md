@@ -71,7 +71,13 @@ dotnet watch run
 
 專案成功啟動後，API 預設會運行在 `http://localhost:5074` (依據 `Properties/launchSettings.json` 設定)。
 
-你可以打開瀏覽器，或使用 API 測試工具（如 Postman、Thunder Client、curl）來發送請求測試。例如：
-```
-http://localhost:5074/todos
-```
+> [!WARNING]
+> **為什麼開啟 `http://localhost:5074/` 會出現 HTTP ERROR 404 找不到網頁？**
+> 這完全是正常的。因為這是一個純後端 API 專案，我們沒有針對網站根目錄 (`/`) 定義任何路由或回傳靜態網頁，因此會顯示 404 錯誤。
+
+你可以打開瀏覽器，或使用 API 測試工具（如 Postman、Thunder Client、curl）來發送請求測試。以下是我們專案中定義的實際可用路徑：
+
+- **查看 API 文件與測試介面 (推薦使用)**：
+  請在瀏覽器開啟 [http://localhost:5074/scalar](http://localhost:5074/scalar) 以使用 Scalar 互動式文件介面。
+- **直接取得 API 資料**：
+  請在瀏覽器開啟 [http://localhost:5074/todos](http://localhost:5074/todos) 可直接取得代辦事項的 JSON 資料。

@@ -71,7 +71,13 @@ dotnet watch run
 
 Once the project successfully starts, the API will run on `http://localhost:5074` by default (based on the `Properties/launchSettings.json` configuration).
 
-You can open a browser or use an API testing tool (such as Postman, Thunder Client, curl) to send a request for testing. For example:
-```
-http://localhost:5074/todos
-```
+> [!WARNING]
+> **Why do I get a 404 Not Found error when visiting `http://localhost:5074/`?**
+> This is completely normal. Because this is a pure backend API project, we haven't defined any routes or web pages for the root directory (`/`), resulting in a 404 error.
+
+You can open a browser or use an API testing tool (such as Postman, Thunder Client, curl) to send a request for testing. Here are the actual available paths defined in our project:
+
+- **View API Documentation and Testing UI (Recommended)**:
+  Open [http://localhost:5074/scalar](http://localhost:5074/scalar) to use the interactive Scalar documentation interface.
+- **Get Data Directly**:
+  Open [http://localhost:5074/todos](http://localhost:5074/todos) to directly retrieve the JSON data for todos.
