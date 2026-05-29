@@ -107,6 +107,44 @@ todosApi.MapDelete("/{id}", Results<NoContent, NotFound> (int id) =>
 .WithName("DeleteTodo")
 .WithSummary("刪除代辦事項");
 
+// 處理 404 (找不到網頁) 的 fallback 路由
+app.MapFallback((HttpContext context) => 
+{
+    context.Response.StatusCode = 404;
+    context.Response.ContentType = "text/html; charset=utf-8";
+    return @"
+        <!DOCTYPE html>
+        <html lang='zh-TW'>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <title>404 - 找不到頁面</title>
+            <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 50px; background-color: #f8f9fa; color: #333; }
+                h1 { font-size: 4em; color: #dc3545; margin-bottom: 0; }
+                h2 { margin-top: 10px; color: #6c757d; }
+                p { font-size: 1.2em; line-height: 1.6; }
+                a { color: #0d6efd; text-decoration: none; font-weight: bold; font-size: 1.1em; }
+                a:hover { text-decoration: underline; color: #0a58ca; }
+                .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+                .btn { display: inline-block; margin-top: 20px; padding: 10px 25px; background-color: #0d6efd; color: white; border-radius: 5px; transition: background-color 0.3s; }
+                .btn:hover { background-color: #0b5ed7; color: white; text-decoration: none; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <h1>404</h1>
+                <h2>找不到頁面 (Not Found)</h2>
+                <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;'>
+                <p>您好！因為這是一個 <strong>.NET Minimal API</strong> 專案，主要作為後端資料服務，所以正常情況下是<strong>沒有提供首頁 (Homepage)</strong> 的。</p>
+                <p>如果您想查看所有可用的 API 以及如何呼叫它們，請前往我們的 API 說明文件：</p>
+                <a href='/scalar' class='btn'>👉 瀏覽 API 文件 (Scalar UI)</a>
+            </div>
+        </body>
+        </html>
+    ";
+});
+
 app.Run();
 
 // 定義資料模型 (Models)
