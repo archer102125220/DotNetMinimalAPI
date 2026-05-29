@@ -358,3 +358,8 @@ MigrationBackup/
 # JetBrains Rider
 .idea/
 *.sln.iml
+
+# Environments
+.env
+.env.*
+!.env.example
