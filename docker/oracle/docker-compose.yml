@@ -1,0 +1,17 @@
+name: dot-net-minimal-api
+services:
+  dot-net-minimal-api-oracle-free-db:
+    image: container-registry.oracle.com/database/free:latest-lite
+    container_name: dot-net-minimal-api-oracle-free-db
+    # 移除 platform: linux/x86_64！因為 Oracle 23ai 支援原生 Mac ARM64 架構，不需模擬，速度極快。
+    restart: no
+    ports:
+      - "1524:1521" # oracle 預設 port 為 1521
+    environment:
+      ORACLE_PWD: OracleFreeAbc123
+    volumes:
+      - dot-net-mvc-oracle-data:/opt/oracle/oradata
+      # 將初始化腳本掛載到啟動資料夾，容器啟動時會自動執行 (若是首次建立)
+      - ./init.sql:/opt/oracle/scripts/startup/01_init.sql
+volumes:
+  dot-net-mvc-oracle-data:

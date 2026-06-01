@@ -1,0 +1,16 @@
+name: dot-net-minimal-api
+services:
+  dot-net-minimal-api-mysql:
+    image: mysql:9
+    container_name: dot-net-minimal-api-mysql
+    platform: linux/x86_64 # 關鍵！解決 Apple Silicon 有時遇到的架構相容問題
+    restart: no
+    ports:
+      - "3309:3306" # mysql 預設 port 為 3306
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456789
+      MYSQL_DATABASE: dot_net_mvc_web_db
+      MYSQL_USER: dot-net-minimal-api
+      MYSQL_PASSWORD: DotNetMinimalApiAbc123
+    volumes:
+      - ./mysql_data:/var/lib/mysql

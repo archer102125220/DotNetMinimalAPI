@@ -1,0 +1,15 @@
+name: dot-net-minimal-api
+services:
+  dot-net-minimal-api-postgres:
+    image: postgres:16
+    container_name: dot-net-minimal-api-postgres
+    restart: no
+    ports:
+      - "5435:5432"  # Postgres 預設是 5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456789
+      POSTGRES_DB: dot_net_mvc_web_db
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
