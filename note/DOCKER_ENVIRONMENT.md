@@ -17,16 +17,16 @@
 ## 🔑 統一環境變數與連線資訊
 
 為了方便切換與測試，本專案在所有資料庫環境中，皆預設配置了相同的應用程式專屬帳號與密碼 (取代預設的高權限 `root` / `sa` / `postgres` 帳號)：
-- **統一帳號 (User)**: `dot-net-mvc-web`
-- **統一密碼 (Password)**: `DotNetMvcWebAbc123`
+- **統一帳號 (User)**: `dot-net-minimal-api`
+- **統一密碼 (Password)**: `DotNetMinimalAPIAbc123`
 - **預設資料庫名稱**: 依資料庫特性而定 (見下表)
 
 | 資料庫服務 | 對外 Port | 資料庫名稱 / Schema | 連線帳號 | 連線密碼 | 備註 |
 | --- | --- | --- | --- | --- | --- |
-| **MSSQL** (預設) | `1434` (對應內部 1433) | `DotNetMvcDb` | `dot-net-mvc-web` | `DotNetMvcWebAbc123` | Apple Silicon Mac 需 Rosetta (`linux/amd64`) |
-| **MySQL** | `3307` (對應內部 3306) | `dot_net_mvc_web_db` | `dot-net-mvc-web` | `DotNetMvcWebAbc123` | Apple Silicon Mac 需指定 `linux/x86_64` |
-| **PostgreSQL**| `5433` (對應內部 5432) | `dot_net_mvc_web_db` | `dot-net-mvc-web` | `DotNetMvcWebAbc123` | |
-| **Oracle 23ai**| `1522` (對應內部 1521) | `FREEPDB1` (PDB) <br> Schema: `dot-net-mvc-web` | `dot-net-mvc-web` | `DotNetMvcWebAbc123` | 原生支援 Mac ARM64 架構 |
+| **MSSQL** (預設) | `1434` (對應內部 1433) | `DotNetMinimalDb` | `dot-net-minimal-api` | `DotNetMinimalAPIAbc123` | Apple Silicon Mac 需 Rosetta (`linux/amd64`) |
+| **MySQL** | `3307` (對應內部 3306) | `dot_net_minimal_api_db` | `dot-net-minimal-api` | `DotNetMinimalAPIAbc123` | Apple Silicon Mac 需指定 `linux/x86_64` |
+| **PostgreSQL**| `5433` (對應內部 5432) | `dot_net_minimal_api_db` | `dot-net-minimal-api` | `DotNetMinimalAPIAbc123` | |
+| **Oracle 23ai**| `1522` (對應內部 1521) | `FREEPDB1` (PDB) <br> Schema: `dot-net-minimal-api` | `dot-net-minimal-api` | `DotNetMinimalAPIAbc123` | 原生支援 Mac ARM64 架構 |
 
 ---
 
@@ -53,8 +53,8 @@
 
 ### 3. `init.sql` (資料庫與帳號建立腳本)
 本腳本包含了「防呆與冪等性 (Idempotent)」的設計（即多次執行也不會引發錯誤），其主要任務：
-1. **建立資料庫**：建立名為 `DotNetMvcDb` 的資料庫。
-2. **建立登入與使用者 (Login & User)**：建立應用程式專用的帳號 `dot-net-mvc-web`，密碼設定為 `DotNetMvcWebAbc123`。
+1. **建立資料庫**：建立名為 `DotNetMinimalDb` 的資料庫。
+2. **建立登入與使用者 (Login & User)**：建立應用程式專用的帳號 `dot-net-minimal-api`，密碼設定為 `DotNetMinimalAPIAbc123`。
 3. **權限配置**：將此使用者加入 `db_owner` 角色，確保 EF Core 能順利執行 Migrations 以及一般讀寫操作。
 
 ---
@@ -89,5 +89,5 @@ docker-compose up -d
 
 ## 💡 開發注意事項
 - 在 `.NET Web API` 的 `appsettings.json` 中設定連線字串 (Connection String) 時，請參考上方表格中的對外 Port、帳號與密碼，**不要**使用高權限管理員帳號 (`sa`, `root`, `postgres`)。
-  - MSSQL 範例：`Server=localhost,1434;Database=DotNetMvcDb;User Id=dot-net-mvc-web;Password=DotNetMvcWebAbc123;TrustServerCertificate=True;`
+  - MSSQL 範例：`Server=localhost,1434;Database=DotNetMinimalDb;User Id=dot-net-minimal-api;Password=DotNetMinimalAPIAbc123;TrustServerCertificate=True;`
 - 專案程式碼如果需要依賴新的資料庫欄位或表，應優先透過 EF Core 的 Migrations (`dotnet ef migrations add ...`) 來處理，盡量不要手動去改 `init.sql`，`init.sql` 僅負責「基礎環境與權限」的建置。

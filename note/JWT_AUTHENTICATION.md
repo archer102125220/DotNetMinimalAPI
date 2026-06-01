@@ -1,6 +1,6 @@
 # JWT 驗證與 System.IdentityModel.Tokens.Jwt 教學筆記
 
-這份筆記記錄了如何在 .NET (特別是 ASP.NET Core Web API) 專案中引入 `System.IdentityModel.Tokens.Jwt` 套件，以及如何實作基於 JSON Web Token (JWT) 的驗證機制。
+這份筆記記錄了如何在 .NET (特別是 ASP.NET Core Minimal API) 專案中引入 `System.IdentityModel.Tokens.Jwt` 套件，以及如何實作基於 JSON Web Token (JWT) 的驗證機制。
 
 ## 1. 簡介
 
@@ -61,7 +61,7 @@ var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["Key"] ?? throw new ArgumentNullException("JwtSettings:Key is missing");
 
-// 2. 設定 Authentication 服務
+// 2. 設定 Authentication 與 Authorization 服務
 builder.Services.AddAuthentication(options =>
 {
     // 設定預設的驗證機制為 JwtBearer
@@ -85,18 +85,15 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)) // 簽章金鑰
     };
 });
-
-// ... 其他服務註冊 (AddControllers, etc.)
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
-
-// ... 其他 Middleware
 
 // 3. 啟用驗證與授權 Middleware (順序很重要，UseAuthentication 必須在 UseAuthorization 之前)
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+// ... 在這裡定義你的 Map 端點
 
 app.Run();
 ```
@@ -155,36 +152,36 @@ public class AuthService
 }
 ```
 
-### 3.4 保護 API 端點 (使用 `[Authorize]`)
+### 3.4 保護 API 端點 (使用 `.RequireAuthorization()`)
 
-在 Controller 或 Action 上加上 `[Authorize]` 屬性，即可限制只有攜帶有效 JWT 的請求才能存取。
+在 Minimal API 中，我們在註冊路由時附加 `.RequireAuthorization()` 來限制只有攜帶有效 JWT 的請求才能存取。
 
 ```csharp
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
-[ApiController]
-[Route("api/[controller]")]
-public class ProtectedController : ControllerBase
+var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// 建立一個需要授權的路由群組
+var protectedGroup = app.MapGroup("/api/protected").RequireAuthorization();
+
+// 需要登入才能存取
+protectedGroup.MapGet("/data", (ClaimsPrincipal user) =>
 {
-    // 需要登入才能存取
-    [Authorize]
-    [HttpGet("data")]
-    public IActionResult GetProtectedData()
-    {
-        // 可以透過 User.Claims 取得 Token 內的資訊
-        var userName = User.Identity?.Name;
-        return Ok(new { Message = $"Hello {userName}, this is protected data!" });
-    }
+    // 可以從 ClaimsPrincipal 取得 Token 內的資訊
+    var userName = user.Identity?.Name;
+    return Results.Ok(new { Message = $"Hello {userName}, this is protected data!" });
+});
 
-    // 需要特定角色才能存取
-    [Authorize(Roles = "Admin")]
-    [HttpGet("admin-data")]
-    public IActionResult GetAdminData()
-    {
-        return Ok(new { Message = "This is admin only data." });
-    }
-}
+// 需要特定角色才能存取
+protectedGroup.MapGet("/admin-data", () =>
+{
+    return Results.Ok(new { Message = "This is admin only data." });
+}).RequireAuthorization(policy => policy.RequireRole("Admin"));
+
+app.Run();
 ```
 
 ## 4. ⚠️ 安全性與最佳實踐建議

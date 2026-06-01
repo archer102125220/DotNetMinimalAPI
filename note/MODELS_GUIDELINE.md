@@ -1,4 +1,4 @@
-# ASP.NET Core Web API: 資料模型 (Models) 與 EF Core 開發指南
+# ASP.NET Core Minimal API: 資料模型 (Models) 與 EF Core 開發指南
 
 本指南整合了專案中關於 Entity Framework Core (EF Core) 的安裝設定、資料模型 (`Models` 目錄) 的結構規範，以及深度檢查政策 (Deep Check Policy)。為維持專案架構清晰、安全且高效，請所有開發者嚴格遵守。
 
@@ -32,15 +32,15 @@ dotnet add package Oracle.EntityFrameworkCore
 ### 2. 資料庫連線設定
 
 **設定 `appsettings.json`：**
-本專案支援多種資料庫，您可以依據環境選擇對應的連線字串。以下提供四大資料庫的設定範例（皆使用預設的 `dot-net-mvc-web` 帳號）：
+本專案支援多種資料庫，您可以依據環境選擇對應的連線字串。以下提供四大資料庫的設定範例（皆使用預設的 `dot-net-minimal-api` 帳號）：
 
 ```json
 {
   "ConnectionStrings": {
-    "OracleConnection": "User Id=dot-net-mvc-web;Password=DotNetMvcWebAbc123;Data Source=localhost:1521/FREEPDB1;",
-    "SqlServerConnection": "Server=localhost,1434;Database=DotNetMvcDb;User Id=dot-net-mvc-web;Password=DotNetMvcWebAbc123;TrustServerCertificate=True;",
-    "PostgresConnection": "Host=localhost;Port=5432;Database=DotNetMvcDb;Username=dot-net-mvc-web;Password=DotNetMvcWebAbc123;",
-    "MySqlConnection": "Server=localhost;Port=3306;Database=DotNetMvcDb;User=dot-net-mvc-web;Password=DotNetMvcWebAbc123;"
+    "OracleConnection": "User Id=dot-net-minimal-api;Password=DotNetMinimalAPIAbc123;Data Source=localhost:1521/FREEPDB1;",
+    "SqlServerConnection": "Server=localhost,1434;Database=DotNetMinimalDb;User Id=dot-net-minimal-api;Password=DotNetMinimalAPIAbc123;TrustServerCertificate=True;",
+    "PostgresConnection": "Host=localhost;Port=5432;Database=DotNetMinimalDb;Username=dot-net-minimal-api;Password=DotNetMinimalAPIAbc123;",
+    "MySqlConnection": "Server=localhost;Port=3306;Database=DotNetMinimalDb;User=dot-net-minimal-api;Password=DotNetMinimalAPIAbc123;"
   }
 }
 ```
@@ -50,7 +50,7 @@ dotnet add package Oracle.EntityFrameworkCore
 ```csharp
 using Microsoft.EntityFrameworkCore;
 
-namespace DotNetMvcAPI.Data;
+namespace DotNetMinimalAPI.Data;
 
 public class AppDbContext : DbContext
 {
@@ -68,7 +68,7 @@ public class AppDbContext : DbContext
 在 `Program.cs` 檔案中，將 `AppDbContext` 註冊至依賴注入容器中：
 ```csharp
 using Microsoft.EntityFrameworkCore;
-using DotNetMvcAPI.Data;
+using DotNetMinimalAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -112,38 +112,38 @@ var app = builder.Build();
   - 僅在 `Data` (DbContext) 或 `Services` 層級中進行操作。
 
 ### 2. `DTOs/` (資料傳輸物件)
-- **用途**：專門用於 API 請求與回應，以及 Service 層與 Controller 層之間的資料傳遞。
+- **用途**：專門用於 API 請求與回應，以及 Service 層與 Endpoints 之間的資料傳遞。
 - **規則**：
   - **永遠不要**將 Entity 直接當作請求或回應。
   - 每個 API 端點建議有專屬的 DTO（例如 `UserRegisterRequest`, `UserProfileResponse`）。
   - 結構應保持扁平，僅包含傳輸所需的純資料。
-  - 可以在屬性上加入資料驗證標籤（Data Annotations）進行 API 的輸入驗證。
+  - 可以透過第三方套件（如 FluentValidation）或手動邏輯進行 API 的輸入驗證。
 
 ---
 
-## 🛡️ 第三部分：核心開發規範 (Controller-DTO 模式)
+## 🛡️ 第三部分：核心開發規範 (Endpoint-DTO 模式)
 
-### 1. Thin Controllers 模式
-- **Always use DTOs**：Controller 的職責是從 Service 取得資料 (Entity / 內部 DTO)，將其轉換為對外的 Response DTO，然後回傳。
+### 1. Thin Endpoints 模式
+- **Always use DTOs**：Route handler (Endpoint) 的職責是從 Service 取得資料 (Entity / 內部 DTO)，將其轉換為對外的 Response DTO，然後回傳。
 - ❌ **錯誤示範**：直接回傳資料庫實體
   ```csharp
-  [HttpGet("{userId}")]
-  public async Task<IActionResult> Profile(int userId) {
-      User? user = await _dbContext.Users.FindAsync(userId);
-      return Ok(user); // ❌ 危險！可能外洩機密資料，且易引發 JSON 序列化遞迴問題
-  }
+  app.MapGet("/users/{userId}", async (int userId, AppDbContext dbContext) => 
+  {
+      User? user = await dbContext.Users.FindAsync(userId);
+      return Results.Ok(user); // ❌ 危險！可能外洩機密資料，且易引發 JSON 序列化遞迴問題
+  });
   ```
 - ✅ **正確示範**：轉換為 DTO
   ```csharp
-  [HttpGet("{userId}")]
-  public async Task<IActionResult> Profile(int userId) {
-      var user = await _userService.GetUserAsync(userId);
+  app.MapGet("/users/{userId}", async (int userId, IUserService userService) => 
+  {
+      var user = await userService.GetUserAsync(userId);
       var dto = new UserProfileResponse {
           Username = user.Username,
           Email = user.Email
       };
-      return Ok(dto); // ✅ 安全
-  }
+      return Results.Ok(dto); // ✅ 安全
+  });
   ```
 
 ### 2. 型別安全與 Nullable Reference Types
@@ -156,23 +156,38 @@ var app = builder.Build();
   ```
 
 ### 3. 執行時期資料驗證 (Runtime Data Validation)
-在 `DTOs` 中，善用 Data Annotations 搭配 `[ApiController]` 提供的自動 `ModelState` 檢查進行後端防護。
-- 字串檢查：優先使用 `string.IsNullOrEmpty()` 或 `string.IsNullOrWhiteSpace()`。
-- 驗證標籤範例：
-  ```csharp
-  using System.ComponentModel.DataAnnotations;
+Minimal APIs **預設不支援** `[Required]` 等 Data Annotations 的自動 `ModelState` 驗證。為了達成有效的驗證，我們建議採用以下幾種方式：
 
-  public class UserRegisterRequest
-  {
-      [Required(ErrorMessage = "使用者名稱為必填")]
-      [StringLength(50, MinimumLength = 3, ErrorMessage = "長度必須在 3 到 50 個字元之間")]
-      public required string Username { get; set; }
+- **(推薦) 使用 FluentValidation**：建立獨立的 Validator 類別，搭配 EndpointFilter 進行自動驗證。
+- **(簡單) 手動驗證**：在 Endpoint 內直接使用 `if` 判斷並回傳 `Results.BadRequest()`。
+- **(進階) 自訂 EndpointFilter**：撰寫通用的 Filter 來攔截 Request 並執行 Data Annotations 或 FluentValidation。
 
-      [Required]
-      [EmailAddress(ErrorMessage = "Email 格式不正確")]
-      public required string Email { get; set; }
-  }
-  ```
+**FluentValidation 搭配 EndpointFilter 範例：**
+```csharp
+// 1. 定義 DTO 與 Validator
+public class UserRegisterRequest
+{
+    public required string Username { get; set; }
+    public required string Email { get; set; }
+}
+
+public class UserRegisterValidator : AbstractValidator<UserRegisterRequest>
+{
+    public UserRegisterValidator()
+    {
+        RuleFor(x => x.Username).NotEmpty().Length(3, 50);
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+    }
+}
+
+// 2. 註冊與使用
+app.MapPost("/users/register", (UserRegisterRequest req) => 
+{
+    // 處理註冊邏輯...
+    return Results.Ok();
+})
+.AddEndpointFilter<ValidationFilter<UserRegisterRequest>>(); // 加入驗證 Filter
+```
 
 ### 4. 避免動態與弱型別
 - **嚴禁使用** `dynamic` 或 `object`（除非必須使用 Reflection 或處理未知結構的 JSON）。
@@ -233,6 +248,6 @@ public async Task<List<User>> GetActiveUsersAsync()
 - [ ] 實體 (Entity) 是否被隔離，沒有直接回傳給 API 客戶端？
 - [ ] DTO 的命名是否明確 (例如加上 Request/Response 後綴)？
 - [ ] 屬性的 Nullable (`?`) 標示是否精確？
-- [ ] 是否已經為 Request DTO 加上了適當的 `[Required]` 等驗證標籤？
+- [ ] 是否已針對 Minimal API 環境建立適合的資料驗證機制（如 FluentValidation）？
 - [ ] 所有 EF Core 查詢是否都採用非同步 (`await`)？
 - [ ] 唯讀的查詢是否都加上了 `.AsNoTracking()`？
