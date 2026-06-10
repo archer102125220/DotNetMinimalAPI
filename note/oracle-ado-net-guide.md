@@ -128,6 +128,31 @@ public async Task<List<OracleDemoItem>> GetItemsViaAdoNet()
   command.Parameters.Add(new OracleParameter("name", userName));
   ```
 
+### 🚨 規則六：重複使用 Command 時必須清空或更新 Parameters
+在同一個方法中，如果您重用同一個 `OracleCommand` 物件來執行多個不同的 SQL 語句，**必須注意清除舊的參數**，或者使用更新參數值的方式，否則執行第二個 SQL 時可能會因為帶入前一個指令的參數而發生錯誤。
+- **❌ 錯誤寫法** (參數累積導致錯誤)：
+  ```csharp
+  command.CommandText = "SELECT * FROM \"Users\" WHERE \"Id\" = :id";
+  command.Parameters.Add(new OracleParameter("id", 1));
+  await command.ExecuteReaderAsync();
+
+  // 忘記清空 Parameters，第二個查詢會連同 id 參數一起送出！
+  command.CommandText = "SELECT * FROM \"Orders\" WHERE \"UserId\" = :userId";
+  command.Parameters.Add(new OracleParameter("userId", 1));
+  await command.ExecuteReaderAsync();
+  ```
+- **✅ 正確寫法 1** (使用 `Parameters.Clear()`)：
+  ```csharp
+  command.Parameters.Clear(); // 執行新查詢前先清空參數
+  command.CommandText = "SELECT * FROM ...";
+  command.Parameters.Add(...);
+  ```
+- **✅ 正確寫法 2** (保留參數定義，僅更新值)：
+  ```csharp
+  command.Parameters["id"].Value = 2; // 若 SQL 相同，只需更新值即可重用
+  await command.ExecuteReaderAsync();
+  ```
+
 ---
 
 ## 6. 其他常用操作
