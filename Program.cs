@@ -55,6 +55,10 @@ app.MapGroup("/api/oracle-demo")
 app.MapGroup("/api/legacy-oracle-demo")
    .MapLegacyOracleDemoRoutes();
 
+// 註冊【原生 ADO.NET】的並存示範 API 路由
+app.MapGroup("/api/adonet-oracle-demo")
+   .MapAdoNetOracleDemoRoutes();
+
 // 1. GET: 取得所有 Todo
 todosApi.MapGet("/", () => sampleTodos)
         .WithName("GetTodos")

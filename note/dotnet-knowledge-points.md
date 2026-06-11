@@ -62,3 +62,115 @@ ASP.NET Core 的設計理念在於安全與職責分離。資料庫結構（Sche
 > `MySqlException: Table 'YourDatabase.YourTable' doesn't exist`
 
 **解決方案**非常簡單：打開終端機，執行一次 `dotnet ef database update`（如果有多個 DbContext，記得加上 `-c YourDbContextName` 指定），把資料表建好之後，應用程式就能正常寫入資料了！
+
+## C# 字串排版與組合語法演進
+
+在 C# 開發中，組合字串或是撰寫多行 SQL 語法（如在 `OracleDemoController` 第 279 行所見的寫法）有非常多種方式，以下整理了常見的寫法以及它們分別支援的 C# 與 .NET 版本：
+
+### 1. 字串串接 (String Concatenation) `+`
+最基本、傳統的字串相加。不支援多行，寫多行時每行都要加上 `+`，容易看錯。
+*   **支援版本**：C# 1.0 / .NET Framework 1.0 起
+*   **寫法**：
+    ```csharp
+    string sql = "SELECT * " +
+                 "FROM Users " +
+                 "WHERE Id = " + userId;
+    ```
+
+### 2. 字串格式化 `string.Format`
+使用 `{0}`, `{1}` 作為佔位符，將變數代入字串中，較 `+` 清楚，但遇到大量變數時容易對錯索引位置。
+*   **支援版本**：C# 1.0 / .NET Framework 1.0 起
+*   **寫法**：
+    ```csharp
+    string sql = string.Format("SELECT * FROM Users WHERE Id = {0}", userId);
+    ```
+
+### 3. 逐字字串 (Verbatim String Literal) `@""`
+字串開頭加上 `@`。支援多行輸入，且不需要跳脫反斜線 `\`。但如果字串內本身有雙引號 `"`，需要寫兩個雙引號 `""` 來跳脫。
+*   **支援版本**：C# 1.0 / .NET Framework 1.0 起
+*   **寫法**：
+    ```csharp
+    string sql = @"
+        SELECT *
+        FROM Users
+        WHERE Name = ""John""
+    ";
+    ```
+
+### 4. 字串插值 (String Interpolation) `$""`
+字串開頭加上 `$`。允許直接在 `{}` 裡面寫變數或 C# 運算式，大幅提高可讀性，取代了 `string.Format` 的寫法。
+*   **支援版本**：C# 6.0 / .NET Framework 4.6 / .NET Core 1.0 起
+*   **寫法**：
+    ```csharp
+    string sql = $"SELECT * FROM Users WHERE Id = {userId}";
+    ```
+
+### 5. 逐字字串插值 (Interpolated Verbatim String) `$@""` 或 `@$""`
+同時使用 `$` 與 `@`，結合了「變數代入」與「多行支援 / 忽略反斜線跳脫」的優點。
+*(註：C# 6 只能用 `$@`，C# 8 開始支援 `@$` 兩種順序互換)*
+*   **支援版本**：C# 6.0 / .NET Framework 4.6 / .NET Core 1.0 起
+*   **寫法**：
+    ```csharp
+    string sql = $@"
+        SELECT *
+        FROM Users
+        WHERE Id = {userId} AND Name = ""John""
+    ";
+    ```
+
+### 6. 原始字串常值 (Raw String Literal) `"""..."""`
+使用至少三個雙引號 `"""` 包起來。完美解決多行字串、排版縮排、以及內部引號跳脫的問題。
+*   **解決縮排問題**：編譯器會自動以結尾 `"""` 所在的縮排位置為基準，自動切掉前方多餘的空白。
+*   **解決雙引號問題**：內部可以直接使用單一雙引號 `"`，不需再寫成 `""` 跳脫（這就是為什麼在 `OracleDemoController` 裡寫 Oracle SQL 需要雙引號欄位時非常方便）。
+*   **支援版本**：C# 11 / .NET 7 起
+*   **寫法**：
+    ```csharp
+    string sql = """
+        SELECT "Id", "Name"
+        FROM "Users"
+        """;
+    ```
+
+### 7. 原始字串插值 (Interpolated Raw String Literal) `$$"""..."""`
+在原始字串前方加上 `$`。
+如果是兩個 `$$`，則代表裡面遇到兩個大括號 `{{ }}` 才是變數代入，單一個大括號 `{ }` 則會被當作普通字元輸出。這在組合 JSON 或帶有大括號的 SQL 語法時特別有用。
+*   **支援版本**：C# 11 / .NET 7 起
+*   **寫法**：
+    ```csharp
+    string json = $$"""
+        {
+            "Id": {{userId}},
+            "Name": "John"
+        }
+        """;
+    ```
+
+### 8. 動態字串組合利器 `StringBuilder`
+在 C# 中，字串 (`string`) 是**不可變的 (Immutable)**。這代表每次使用 `+` 或 `+=` 修改字串時，系統都會在記憶體中配置一塊新空間來存放新字串，並把舊字串丟棄交由垃圾回收器 (GC) 處理。如果只是組合兩三個變數，這不會有影響；但如果在**迴圈中**或是**大量條件分支中**不斷拼接字串，會造成嚴重的效能與記憶體負擔。
+
+`StringBuilder` (位於 `System.Text` 命名空間) 則是**可變的字串緩衝區**。它會在內部維護一個字元陣列，當你呼叫 `.Append()` 或 `.AppendLine()` 時，它會直接修改內部陣列內容，不會一直產生新的字串物件，效能極佳。
+
+*   **使用時機**：在迴圈內組合大量字串、或是需要根據大量複雜條件動態拼湊超長字串（如動態 SQL 條件）時。若只是單純一行內組合少量變數，請直接用字串插值 (`$""`) 即可。
+*   **支援版本**：C# 1.0 / .NET Framework 1.0 起
+*   **寫法**：
+    ```csharp
+    using System.Text;
+
+    // 建立一個 StringBuilder 物件
+    StringBuilder sb = new StringBuilder();
+
+    sb.AppendLine("SELECT * FROM Users WHERE 1=1");
+
+    if (hasNameFilter)
+    {
+        sb.AppendLine("AND Name = @Name");
+    }
+
+    if (hasAgeFilter)
+    {
+        sb.AppendLine("AND Age > @Age");
+    }
+
+    // 最後呼叫 ToString() 轉回一般 string
+    string sql = sb.ToString();
+    ```

@@ -1,7 +1,9 @@
+using System.Data.Common;
 using DotNetMinimalAPI.Data;
 using DotNetMinimalAPI.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Oracle.ManagedDataAccess.Client;
 
 namespace DotNetMinimalAPI.Routes;
 
@@ -31,6 +33,7 @@ public static class LegacyOracleDemoRoutes
         group.MapPost("/", CreateItem).WithSummary("⚠️ 危險寫法：直接接收 Entity (Over-posting 風險)");
         group.MapPut("/{id}", UpdateItem).WithSummary("⚠️ 危險寫法：直接從 Entity 更新資料");
         group.MapDelete("/{id}", DeleteItem).WithSummary("⚠️ 刪除項目");
+        group.MapGet("/adonet", GetItemsWithAdoNetLegacy).WithSummary("⚠️ 危險寫法：ADO.NET 直接回傳 Entity 且有隱碼攻擊風險");
 
         return group;
     }
@@ -144,4 +147,84 @@ public static class LegacyOracleDemoRoutes
         return TypedResults.Ok(items);
     }
     */
+
+    /// <summary>
+    /// ⚠️ 【危險寫法示範：原生 ADO.NET + 隱碼攻擊 + 直接回傳 Entity】
+    /// 這裡示範了舊系統中最致命的幾種寫法：
+    /// 1. 直接字串串接 SQL 語法 (產生極度嚴重的 SQL Injection 漏洞)。
+    /// 2. 使用原生 ADO.NET 讀出資料後，直接塞給 Entity 而不用 DTO (無窮迴圈與資料外洩)。
+    /// </summary>
+    private static async Task<Results<Ok<List<OracleDemoItem>>, BadRequest<string>>> GetItemsWithAdoNetLegacy(string? keyword, IConfiguration configuration)
+    {
+        string? connectionString = configuration.GetConnectionString("OracleDemoConnection");
+        if (string.IsNullOrEmpty(connectionString)) return TypedResults.BadRequest("無法取得連線字串");
+
+        List<OracleDemoItem> resultList = new();
+
+        await using OracleConnection connection = new OracleConnection(connectionString);
+        await connection.OpenAsync();
+
+        await using OracleCommand command = connection.CreateCommand();
+        
+        string sqlText = """
+            SELECT "Id", "Name", "Description", "CreatedAt", "CategoryId"
+            FROM "OracleDemoItems"
+        """;
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            // ❌ 【極度危險】SQL Injection 漏洞！
+            // 舊系統常見的錯誤：直接把使用者的輸入 (keyword) 用字串加進 SQL 中。
+            // 駭客只要輸入： `'; DROP TABLE "OracleDemoItems"; --`
+            // 就會導致整個資料表被惡意刪除！
+            sqlText += " WHERE \"Name\" LIKE '%" + keyword + "%'";
+
+            // ✅ 【防禦方式】：使用「參數化查詢 (Parameterized Query)」
+            // 絕對不能像上面那樣直接把字串加進去。必須改成宣告參數，讓資料庫底層將使用者的輸入視為「純文字」而非「可執行的指令」。
+            // 以下為正確的防禦寫法 (請參考 AdoNetOracleDemoRoutes.cs 的實作)：
+            /*
+            sqlText += " WHERE \"Name\" LIKE :Keyword";
+            command.Parameters.Add(new OracleParameter("Keyword", OracleDbType.NVarchar2) 
+            { 
+                Value = $"%{keyword}%" 
+            });
+            */
+        }
+
+        sqlText += " ORDER BY \"CreatedAt\" DESC";
+        command.CommandText = sqlText;
+
+        await using DbDataReader reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            // ❌ 【危險】直接組裝成 Entity 回傳，若此 Entity 以後掛上 Category 關聯，會引發序列化無窮迴圈
+            OracleDemoItem item = new OracleDemoItem
+            {
+                Id = reader.GetInt32(0),
+                Name = reader.GetString(1),
+                Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                CreatedAt = reader.GetDateTime(3),
+                CategoryId = reader.IsDBNull(4) ? null : reader.GetInt32(4)
+            };
+
+            // ✅ 【正確寫法】：必須使用 DTO (Data Transfer Object) 進行資料轉換，絕不可將底層 Entity 曝露給前端
+            // 應該要將資料裝進一個純資料傳遞用的 Record 或 Class，才能切斷與資料庫的關聯。
+            // (請參考 AdoNetOracleDemoRoutes.cs 中的寫法)：
+            /*
+            OracleDemoItemResponse dtoItem = new OracleDemoItemResponse(
+                Id: reader.GetInt32(0),
+                Name: reader.GetString(1),
+                Description: reader.IsDBNull(2) ? null : reader.GetString(2),
+                CreatedAt: reader.GetDateTime(3),
+                CategoryId: reader.IsDBNull(4) ? null : reader.GetInt32(4)
+            );
+            // 當然，最上面的 resultList 宣告也要記得改為 List<OracleDemoItemResponse>
+            // resultList.Add(dtoItem);
+            */
+
+            resultList.Add(item);
+        }
+
+        return TypedResults.Ok(resultList);
+    }
 }
