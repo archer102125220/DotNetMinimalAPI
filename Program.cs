@@ -51,6 +51,10 @@ RouteGroupBuilder todosApi = app.MapGroup("/todos");
 app.MapGroup("/api/oracle-demo")
    .MapOracleDemoRoutes();
 
+// 註冊【不安全】的舊有寫法示範 API 路由 (僅供參考)
+app.MapGroup("/api/legacy-oracle-demo")
+   .MapLegacyOracleDemoRoutes();
+
 // 1. GET: 取得所有 Todo
 todosApi.MapGet("/", () => sampleTodos)
         .WithName("GetTodos")

@@ -85,7 +85,7 @@ public static class OracleDemoRoutes
         List<OracleDemoItem> items = new();
         if (string.IsNullOrEmpty(keyword))
         {
-            await foreach (var item in GetAllItemsQuery(db))
+            await foreach (OracleDemoItem item in GetAllItemsQuery(db))
             {
                 items.Add(item);
             }
@@ -93,7 +93,7 @@ public static class OracleDemoRoutes
         else
         {
             string searchPattern = $"%{keyword}%";
-            await foreach (var item in SearchItemsQuery(db, searchPattern))
+            await foreach (OracleDemoItem item in SearchItemsQuery(db, searchPattern))
             {
                 items.Add(item);
             }
