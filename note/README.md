@@ -9,6 +9,7 @@
 ## 🏗️ 專案與環境設定 (Project & Environment Setup)
 - [專案架構與設定說明](./PROJECT_STRUCTURE.md) - Minimal API (`Program.cs`) 結構、AOT 與核心設定檔解析。
 - [macOS 開發環境安裝指南](./ASDF_DOTNET_INSTALL_MAC.md) - 透過 `asdf` 安裝 .NET 10 SDK 完整教學。
+- [macOS 開發環境安裝指南 (Mise)](./MISE_DOTNET_INSTALL_MAC.md) - 透過 `mise` 安裝與管理 .NET 10 SDK 完整教學。
 - [Docker 環境設定](./DOCKER_ENVIRONMENT.md) - 建立並管理本地端的 Oracle 資料庫容器。
 - [環境變數與機密管理](./dotnet-env-and-secrets.md) - `appsettings.json` 與開發機密 (User Secrets) 管理教學。
 - [正式部署指南](./DEPLOYMENT.md) - 伺服器部署流程、Native AOT 發布與生產環境資安防護檢查表。
