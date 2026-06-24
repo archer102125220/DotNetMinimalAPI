@@ -166,3 +166,22 @@ WHEN NOT MATCHED THEN
 2.  **IDENTITY 欄位與 EF Core 種子資料衝突 (ORA-00001)**
     如果在 EF Core 的 `OnModelCreating` 裡面使用了 `HasData` 手動指定 Id (如 Id=1, 2, 3) 來塞入種子資料，Oracle 內部的 Identity 流水號計數器**不會**自動跟著跳過這些 Id。當後續想要從應用程式 Insert 新資料時，資料庫可能會嘗試給它 Id=1，進而發生 Primary Key 重複 (`ORA-00001`) 的錯誤。
     *解決方法*：實務上，若要在 Oracle 使用 `HasData`，建議將固定種子資料的 Id 設為負數 (例如 `-1`, `-2`)，或者改用我們示範的 `DbInitializer.cs` 來動態新增種子資料。
+
+3.  **應用程式執行單筆 SQL 語句時，結尾不需加分號 (Semicolon)**
+    習慣 MySQL 或 SQL Server 的開發者，在寫 SQL 指令時常習慣在句尾加上分號 `;` 來做結尾。
+    但在透過 C# 應用程式（例如使用 ADO.NET `OracleCommand` 或 Dapper）向 Oracle 發送**單筆** SQL 語句（如 `SELECT`, `INSERT`, `UPDATE`, `DELETE`）時，結尾**絕對不可以**加上分號，否則會觸發 `ORA-00911: invalid character` 錯誤。
+    > 💡 **補充與例外：資料庫管理工具 (UI Tools)**
+    > 如果您是使用 **DBeaver、DataGrip、Oracle SQL Developer、Navicat** 或是命令列的 **SQL*Plus** 等資料庫管理介面：
+    > 這些工具通常**支援甚至要求**在句尾加上分號 `;`。原因是這些工具在解析我們輸入的一大串「SQL 腳本 (Script)」時，需要依靠分號來切割多筆獨立的 SQL 語句，然後在背後自動將分號剝除，再逐一發送給 Oracle 伺服器執行。
+    > 
+    > 此外，若是在 C# 程式碼中執行包含 `BEGIN ... END;` 的 PL/SQL 匿名區塊（Anonymous Block），區塊內部的敘述與 `END` 後方則**必須**包含分號。
+
+    ```csharp
+    // ❌ 錯誤 (加上分號會引發 ORA-00911)
+    string sqlBad = "SELECT * FROM \"OracleDemoItems\";";
+    var data = await connection.QueryAsync<Item>(sqlBad);
+    
+    // ✅ 正確
+    string sqlGood = "SELECT * FROM \"OracleDemoItems\"";
+    var data = await connection.QueryAsync<Item>(sqlGood);
+    ```
