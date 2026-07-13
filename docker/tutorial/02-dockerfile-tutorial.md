@@ -1,6 +1,6 @@
 # Dockerfile 撰寫教學
 
-`Dockerfile` 是一份文字檔，裡面包含了建立 Docker Image 所需的所有指令。我們可以把它想像成是一份「食譜」，告訴 Docker 該如何一步步建構我們的應用程式環境。
+`Dockerfile` 是一份文字檔，裡面包含了建立 Docker Image 所需的所有指令，也就是 Docker Image 的設定檔。我們可以把它想像成是一份「食譜」，告訴 Docker 該如何一步步建構我們的應用程式環境。
 
 請參考 `sample-app/Dockerfile` 來搭配以下說明。
 

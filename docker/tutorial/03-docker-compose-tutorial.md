@@ -2,7 +2,7 @@
 
 當一個應用程式包含多個服務（例如：Web 應用程式 + 資料庫 + 快取伺服器）時，如果每個都要用 `docker run` 一個個啟動會非常麻煩。
 
-`Docker Compose` 是一個用來定義與執行多容器 Docker 應用程式的工具。我們只需要寫一份 YAML 檔案 (`docker-compose.yml`)，就可以用一個指令啟動所有的服務。
+`Docker Compose` 是一個用來定義與執行多容器 Docker 應用程式的工具。我們只需要寫一份 YAML 檔案 (`docker-compose.yml`)，就可以用一個指令啟動所有的服務，因此可以理解為就是 Docker Container 的設定檔。
 
 請參考 `sample-app/docker-compose.yml` 來搭配以下說明。
 
