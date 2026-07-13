@@ -18,6 +18,7 @@
 - [AI 與團隊核心開發規範](./AI_CODING_GUIDELINES.md) - 專案的程式碼風格、AOT 限制、嚴格深度檢查 (Deep Check) 標準。
 - [Minimal API 資料模型指南](./MODELS_GUIDELINE.md) - DTO 的使用方式、FluentValidation 驗證與 Thin Endpoints 模式。
 - [Minimal API 路由指南](./minimal-api-routing-guide.md) - `MapGroup` 的運用與端點 (Endpoints) 設計最佳實踐。
+- [預存程序與 EF Core 整合指南](./ef-core-sql-procedures-guide.md) - 記錄為何現代開發較少使用 SQL Procedures，以及如何在 EF Core Migrations 中管理並呼叫預存程序。
 
 ## 🛢️ 資料庫與 ORM 操作 (Database & ORM)
 - [EF Core (ORM) 基礎與進階操作](./ef-core-orm-guide.md) - 資料庫連線、查詢最佳實踐 (`AsNoTracking`) 與 N+1 陷阱防範。

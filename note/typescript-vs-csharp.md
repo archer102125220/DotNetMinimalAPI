@@ -1,4 +1,4 @@
-# TypeScript vs C# (DotNetMvcWeb 專案語法差異筆記)
+# TypeScript vs C# (DotNetMinimalAPI 專案語法差異筆記)
 
 這份筆記旨在幫助熟悉 TypeScript (Node.js/前端) 的開發者，快速適應本專案 (.NET 10, C# 14/13) 的嚴格撰寫規範與語法差異。
 
@@ -148,9 +148,9 @@ TypeScript 開發者常使用 `typeof` 或 `instanceof` 以及 discriminated uni
   ```
 - **C#** 依賴邏輯上的命名空間 (Namespace)：
   ```csharp
-  using DotNetMvcWeb.Services; // 放在檔案頂部
+  using DotNetMinimalAPI.Services; // 放在檔案頂部
   
-  namespace DotNetMvcWeb.Controllers;
+  namespace DotNetMinimalAPI.Controllers;
   // 類別內容...
   ```
   *不用管檔案在哪個資料夾，只要命名空間對了就能使用。但專案規範要求資料夾結構必須與命名空間一致。*
