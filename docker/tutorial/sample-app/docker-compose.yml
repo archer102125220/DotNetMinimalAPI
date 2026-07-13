@@ -1,0 +1,84 @@
+# 定義 Docker Compose 檔案的語法版本。3.8 是一個穩定且廣泛支援的版本。
+version: '3.8'
+
+# services 區塊用來定義這個專案包含了哪些「服務 (容器)」
+services:
+  
+  # ---------------------------------------------------------
+  # 服務 1：Web 應用程式 (使用 ASP.NET Core)
+  # ---------------------------------------------------------
+  webapp:
+    # build 區塊表示這個容器不是從網路下載現成 Image，而是要當場自己建置 (Build)
+    build:
+      context: .             # context 指定 build 的工作目錄，. 代表當前目錄
+      dockerfile: Dockerfile # 指定要用哪一個檔案來 build，預設就是 Dockerfile
+    
+    # 幫這個容器取個好記的名字，如果沒指定，Docker 會隨機產生帶有目錄前綴的名字
+    container_name: sample_webapp
+    
+    # ports 區塊負責將主機 (你的電腦) 的 Port 對應到容器內的 Port
+    # 格式為 "Host_Port:Container_Port"
+    ports:
+      - "8080:8080" # 將本機的 8080 port 導向容器內的 8080 port
+    
+    # environment 用來設定容器內的系統環境變數
+    environment:
+      # .NET 的 Configuration 系統在 Linux 環境下，使用雙底線 '__' 來表示 JSON 裡的階層
+      # 等同於覆寫 appsettings.json 裡的 ConnectionStrings:DefaultConnection
+      # 這裡我們使用 ${DB_PASSWORD} 來告訴 Compose 從 .env 檔案中讀取機密資訊
+      - ConnectionStrings__DefaultConnection=Host=db;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD};
+      # 強制設定 .NET 環境為 Development (開發模式)
+      - ASPNETCORE_ENVIRONMENT=Development
+    
+    # depends_on 用來設定服務的啟動順序。
+    # 這裡告訴 Docker：必須先啟動名為 'db' 的服務，才能啟動這個 'webapp' 服務。
+    depends_on:
+      - db
+    
+    # networks 將此服務加入名為 app_network 的虛擬網路中
+    # 只要在同一個網路內，容器之間就可以直接用「服務名稱 (例如 db)」互相連線
+    networks:
+      - app_network
+
+  # ---------------------------------------------------------
+  # 服務 2：資料庫 (使用 PostgreSQL)
+  # ---------------------------------------------------------
+  db:
+    # image 表示這個服務不自己 build，而是直接從 Docker Hub 下載官方提供的 Image
+    image: postgres:15-alpine
+    
+    container_name: sample_postgres
+    
+    # restart: always 表示如果這個容器當機或 Docker 重開機，它會自動重新啟動
+    restart: always
+    
+    # 設定 PostgreSQL 官方 image 規定必填的環境變數，用來建立預設資料庫與最高權限帳號
+    environment:
+      # 密碼與帳號不寫死在這裡，而是從我們建立的 .env 檔案中讀取，提高安全性
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    
+    ports:
+      - "5432:5432" # 開放資料庫 port，方便本機用 DBeaver 或 pgAdmin 登入查看資料
+    
+    # volumes 區塊用來將容器內的路徑「掛載 (Mount)」出來，達到資料持久化或分享檔案的目的
+    volumes:
+      # 1. 具名 Volume 掛載 (Named Volume)：將 DB 資料庫實體檔案存放出來。
+      # 這樣就算容器被砍掉，只要 pgdata 這個 volume 還在，資料就不會消失。
+      - pgdata:/var/lib/postgresql/data
+      # 2. 綁定掛載 (Bind Mount)：將本機目錄下的 init.sql 檔案，以唯讀模式映射進容器內
+      # Postgres image 的設計是：第一次啟動時，會自動執行 /docker-entrypoint-initdb.d/ 底下的 SQL
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    
+    networks:
+      - app_network
+
+# 宣告最外層的 volumes，讓 Docker Compose 幫我們建立一塊名為 pgdata 的儲存空間
+volumes:
+  pgdata: 
+
+# 宣告最外層的 networks，建立一個獨立的橋接網路 (bridge)，讓 webapp 跟 db 可以互相溝通
+networks:
+  app_network:
+    driver: bridge

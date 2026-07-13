@@ -1,0 +1,33 @@
+# =================================================================================
+# .dockerignore 檔案用途說明：
+# 此檔案的運作原理類似於 .gitignore，支援使用 # 作為註解。
+# 當執行 `docker build` 時，Docker CLI 會將指令執行目錄 (Context) 的所有檔案傳送給 Docker Engine。
+# 為了避免將不需要的檔案（如編譯產物 bin/obj、機密檔、本機環境檔）傳入，
+# 導致 Build 過程變慢、浪費記憶體，或是不小心把機密資料打包進 Image 中，
+# 我們會在這裡宣告要「忽略」的檔案與目錄。
+# =================================================================================
+
+**/.classpath
+**/.dockerignore
+**/.env
+**/.git
+**/.gitignore
+**/.project
+**/.settings
+**/.toolstarget
+**/.vs
+**/.vscode
+**/*.*proj.user
+**/*.dbmdl
+**/*.jfm
+**/azds.yaml
+**/bin
+**/charts
+**/docker-compose*
+**/Dockerfile*
+**/node_modules
+**/npm-debug.log
+**/obj
+**/secrets.dev.yaml
+**/values.dev.yaml
+README.md

@@ -491,3 +491,5 @@ docker/*/mssql_data
 docker/*/mssql_data/*
 docker/*/pg_data
 docker/*/pg_data/*
+
+!docker/tutorial/sample-app/*
